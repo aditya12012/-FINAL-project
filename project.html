@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>📘 Course Progress Tracker</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --secondary: #f59e0b;
+      --danger: #ef4444;
+      --success: #10b981;
+    }
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      transition: all 0.3s ease;
+    }
+    
+    .progress-bar {
+      transition: width 0.4s ease;
+    }
+    
+    .card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn-primary {
+      background-color: var(--primary);
+      transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+      background-color: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+    
+    .btn-secondary {
+      background-color: var(--secondary);
+      transition: all 0.3s ease;
+    }
+    
+    .btn-secondary:hover {
+      background-color: #e67e22;
+      transform: translateY(-1px);
+    }
+    
+    .btn-danger {
+      background-color: var(--danger);
+      transition: all 0.3s ease;
+    }
+    
+    .btn-danger:hover {
+      background-color: #dc2626;
+      transform: translateY(-1px);
+    }
+    
+    .dark-mode {
+      background-color: #111827;
+      color: #f3f4f6;
+    }
+    
+    .dark-mode .card {
+      background-color: #1f2937;
+      color: #f3f4f6;
+    }
+    
+    .dark-mode input,
+    .dark-mode select {
+      background-color: #374151;
+      color: #f3f4f6;
+      border-color: #4b5563;
+    }
+    
+    .toast {
+      animation: slideIn 0.5s, fadeOut 0.5s 2.5s forwards;
+    }
+    
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+    
+    .pulse {
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen p-6 transition-colors">
+  <main class="max-w-6xl mx-auto">
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden card">
+      <div class="bg-gradient-to-r from-indigo-600 to-indigo-800 p-6 text-white">
+        <header class="flex flex-col sm:flex-row justify-between items-center mb-6">
+          <div>
+            <h1 class="text-3xl font-bold">📘 Course Progress Tracker</h1>
+            <p class="text-indigo-200">Track your learning journey effectively</p>
+          </div>
+          <div class="flex items-center gap-4 mt-4 sm:mt-0">
+            <button id="dark-mode-toggle" class="bg-indigo-800 hover:bg-indigo-900 text-white px-4 py-2 rounded-full flex items-center transition-all">
+              <i class="fas fa-moon mr-2"></i>Toggle Theme
+            </button>
+          </div>
+        </header>
+      </div>
+      
+      <div class="p-6">
+        <!-- Add Course Form -->
+        <form id="add-course-form" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 bg-indigo-50 p-6 rounded-xl">
+          <div class="md:col-span-2">
+            <label for="course-title" class="block text-sm font-medium text-gray-700 mb-1">Course Title</label>
+            <input id="course-title" type="text" placeholder="e.g. Advanced JavaScript" 
+                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+          </div>
+          <div>
+            <label for="total-modules" class="block text-sm font-medium text-gray-700 mb-1">Total Modules</label>
+            <input id="total-modules" type="number" placeholder="e.g. 12" 
+                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+          </div>
+          <div class="flex items-end">
+            <button type="submit" class="btn-primary w-full h-12 flex items-center justify-center rounded-lg font-medium">
+              <i class="fas fa-plus mr-2"></i> Add Course
+            </button>
+          </div>
+          <div class="md:col-span-2">
+            <label for="course-deadline" class="block text-sm font-medium text-gray-700 mb-1">Deadline (optional)</label>
+            <input id="course-deadline" type="date" 
+                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+          </div>
+          <div class="md:col-span-2">
+            <label for="course-description" class="block text-sm font-medium text-gray-700 mb-1">Description (optional)</label>
+            <input id="course-description" type="text" placeholder="Short description" 
+                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+          </div>
+        </form>
+
+        <!-- Search and Filter -->
+        <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+          <div class="relative w-full sm:w-1/2">
+            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+            <input id="search-input" type="text" placeholder="Search courses..." 
+                   class="w-full pl-10 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+          </div>
+          <div class="flex gap-2 w-full sm:w-auto">
+            <select id="status-filter" class="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition w-full">
+              <option value="all">All Courses</option>
+              <option value="completed">Completed</option>
+              <option value="inprogress">In Progress</option>
+              <option value="overdue">Overdue</option>
+            </select>
+            <button id="sort-btn" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-800 px-4 py-2 rounded-lg transition flex items-center">
+              <i class="fas fa-sort mr-2"></i> Sort
+            </button>
+          </div>
+        </div>
+
+        <!-- Course List -->
+        <div class="mb-8">
+          <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+            <i class="fas fa-book-open mr-2"></i> Your Courses
+            <span id="course-count" class="ml-2 bg-indigo-100 text-indigo-800 text-sm font-medium px-2.5 py-0.5 rounded-full">0</span>
+          </h2>
+          
+          <div id="empty-state" class="text-center py-12 bg-gray-50 rounded-xl">
+            <i class="fas fa-book text-4xl text-gray-300 mb-4"></i>
+            <h3 class="text-lg font-medium text-gray-500">No courses added yet</h3>
+            <p class="text-gray-400 mb-4">Start by adding your first course above</p>
+            <button id="add-first-course" class="btn-primary px-6 py-2 rounded-lg inline-flex items-center">
+              <i class="fas fa-plus mr-2"></i> Add Course
+            </button>
+          </div>
+          
+          <ul id="course-list" class="space-y-4"></ul>
+        </div>
+
+        <!-- Statistics and Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <!-- Stats Cards -->
+          <div class="lg:col-span-1 space-y-4">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+              <i class="fas fa-chart-bar mr-2"></i> Statistics
+            </h2>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-4">
+              <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 card">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm font-medium text-gray-500">Total Courses</p>
+                    <p id="stat-total-courses" class="text-2xl font-bold mt-1">0</p>
+                  </div>
+                  <div class="bg-indigo-100 p-3 rounded-full">
+                    <i class="fas fa-book text-indigo-600"></i>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 card">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm font-medium text-gray-500">Total Modules</p>
+                    <p id="stat-total-modules" class="text-2xl font-bold mt-1">0</p>
+                  </div>
+                  <div class="bg-green-100 p-3 rounded-full">
+                    <i class="fas fa-layer-group text-green-600"></i>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 card">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm font-medium text-gray-500">Completed</p>
+                    <p id="stat-completed-modules" class="text-2xl font-bold mt-1">0</p>
+                    <p id="completion-percentage" class="text-sm text-gray-500">0% complete</p>
+                  </div>
+                  <div class="bg-purple-100 p-3 rounded-full">
+                    <i class="fas fa-check-circle text-purple-600"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Progress Chart -->
+          <div class="lg:col-span-2 bg-white p-4 rounded-xl shadow-sm border border-gray-100 card">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+              <i class="fas fa-chart-pie mr-2"></i> Progress Overview
+            </h2>
+            <canvas id="completionChart" height="250"></canvas>
+          </div>
+        </div>
+        
+        <!-- Import/Export -->
+        <div class="bg-indigo-50 p-6 rounded-xl">
+          <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+            <i class="fas fa-file-export mr-2"></i> Data Management
+          </h2>
+          <div class="flex flex-wrap gap-4">
+            <button id="export-btn" class="btn-primary px-6 py-2 rounded-lg flex items-center">
+              <i class="fas fa-file-export mr-2"></i> Export Data
+            </button>
+            <input type="file" id="import-input" class="hidden" accept=".json">
+            <button id="import-btn" class="bg-white border border-indigo-600 text-indigo-600 hover:bg-indigo-50 px-6 py-2 rounded-lg flex items-center transition">
+              <i class="fas fa-file-import mr-2"></i> Import Data
+            </button>
+            <button id="clear-all-btn" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg flex items-center transition">
+              <i class="fas fa-trash mr-2"></i> Clear All
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-4 right-4 bg-indigo-600 text-white px-6 py-3 rounded-lg shadow-lg hidden flex items-center toast">
+    <i class="fas fa-check-circle mr-2"></i>
+    <span id="toast-message">Notification message</span>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div id="confirmation-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+      <h3 id="modal-title" class="text-xl font-bold mb-2">Confirm Action</h3>
+      <p id="modal-message" class="text-gray-600 mb-6">Are you sure you want to perform this action?</p>
+      <div class="flex justify-end gap-3">
+        <button id="modal-cancel" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">Cancel</button>
+        <button id="modal-confirm" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // DOM Elements
+      const form = document.getElementById('add-course-form');
+      const courseList = document.getElementById('course-list');
+      const emptyState = document.getElementById('empty-state');
+      const addFirstCourseBtn = document.getElementById('add-first-course');
+      const searchInput = document.getElementById('search-input');
+      const statusFilter = document.getElementById('status-filter');
+      const sortBtn = document.getElementById('sort-btn');
+      const exportBtn = document.getElementById('export-btn');
+      const importBtn = document.getElementById('import-btn');
+      const importInput = document.getElementById('import-input');
+      const clearAllBtn = document.getElementById('clear-all-btn');
+      const darkToggle = document.getElementById('dark-mode-toggle');
+      const toast = document.getElementById('toast');
+      const confirmationModal = document.getElementById('confirmation-modal');
+      const modalCancel = document.getElementById('modal-cancel');
+      const modalConfirm = document.getElementById('modal-confirm');
+      
+      // Stats elements
+      const totalCourses = document.getElementById('stat-total-courses');
+      const totalModules = document.getElementById('stat-total-modules');
+      const completedModules = document.getElementById('stat-completed-modules');
+      const completionPercentage = document.getElementById('completion-percentage');
+      const courseCount = document.getElementById('course-count');
+      
+      // Chart
+      let completionChart;
+      
+      // Data
+      let courses = [];
+      let currentSort = 'default';
+      
+      // Initialize
+      init();
+      
+      function init() {
+        if (localStorage.getItem('dark-mode') === 'true') {
+          document.body.classList.add('dark-mode');
+          document.body.classList.remove('bg-gradient-to-br', 'from-gray-50', 'to-gray-100');
+        }
+        const savedCourses = localStorage.getItem('courses');
+        if (savedCourses) {
+          courses = JSON.parse(savedCourses);
+          renderCourses();
+        } else {
+          emptyState.classList.remove('hidden');
+        }
+        initChart();
+        form.addEventListener('submit', handleAddCourse);
+        addFirstCourseBtn.addEventListener('click', () => {
+          document.getElementById('course-title').focus();
+        });
+        searchInput.addEventListener('input', renderCourses);
+        statusFilter.addEventListener('change', renderCourses);
+        sortBtn.addEventListener('click', toggleSort);
+        exportBtn.addEventListener('click', exportData);
+        importBtn.addEventListener('click', () => importInput.click());
+        importInput.addEventListener('change', importData);
+        clearAllBtn.addEventListener('click', confirmClearAll);
+        darkToggle.addEventListener('click', toggleDarkMode);
+        modalCancel.addEventListener('click', closeModal);
+        modalConfirm.addEventListener('click', executeModalAction);
+      }
+      
+      function initChart() {
+        const ctx = document.getElementById('completionChart').getContext('2d');
+        completionChart = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Completed', 'In Progress', 'Not Started'],
+            datasets: [{
+              data: [0, 0, 0],
+              backgroundColor: [
+                '#10b981',
+                '#6366f1',
+                '#e5e7eb'
+              ],
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: {
+                  usePointStyle: true,
+                  padding: 20
+                }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const label = context.label || '';
+                    const value = context.raw || 0;
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                    const percentage = Math.round((value / total) * 100);
+                    return `${label}: ${value} (${percentage}%)`;
+                  }
+                }
+              }
+            },
+            cutout: '70%'
+          }
+        });
+      }
+      
+      function handleAddCourse(e) {
+        e.preventDefault();
+        const title = document.getElementById('course-title').value.trim();
+        const modules = parseInt(document.getElementById('total-modules').value);
+        const deadline = document.getElementById('course-deadline').value;
+        const description = document.getElementById('course-description').value.trim();
+        
+        if (!title || isNaN(modules)) {
+          showToast('⚠️ Please fill all required fields', 'warning');
+          return;
+        }
+        
+        const course = {
+          id: Date.now(),
+          title,
+          modules,
+          completed: 0,
+          deadline,
+          description,
+          createdAt: new Date().toISOString()
+        };
+        
+        courses.push(course);
+        form.reset();
+        showToast('✅ Course added successfully');
+        renderCourses();
+        setTimeout(() => {
+          const newCourse = document.querySelector(`[data-id="${course.id}"]`);
+          if (newCourse) {
+            newCourse.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            newCourse.classList.add('bg-indigo-50');
+            setTimeout(() => newCourse.classList.remove('bg-indigo-50'), 2000);
+          }
+        }, 100);
+      }
+      
+      function renderCourses() {
+        let filteredCourses = [...courses];
+        const searchTerm = searchInput.value.toLowerCase();
+        const filterValue = statusFilter.value;
+        
+        if (searchTerm) {
+          filteredCourses = filteredCourses.filter(course => 
+            course.title.toLowerCase().includes(searchTerm) || 
+            (course.description && course.description.toLowerCase().includes(searchTerm))
+          );
+        }
+        
+        switch(filterValue) {
+          case 'completed':
+            filteredCourses = filteredCourses.filter(course => course.completed === course.modules);
+            break;
+          case 'inprogress':
+            filteredCourses = filteredCourses.filter(course => 
+              course.completed > 0 && course.completed < course.modules
+            );
+            break;
+          case 'overdue':
+            filteredCourses = filteredCourses.filter(course => 
+              course.deadline && new Date(course.deadline) < new Date() && course.completed < course.modules
+            );
+            break;
+        }
+        
+        switch(currentSort) {
+          case 'title-asc':
+            filteredCourses.sort((a, b) => a.title.localeCompare(b.title));
+            break;
+          case 'title-desc':
+            filteredCourses.sort((a, b) => b.title.localeCompare(a.title));
+            break;
+          case 'progress-asc':
+            filteredCourses.sort((a, b) => (a.completed / a.modules) - (b.completed / b.modules));
+            break;
+          case 'progress-desc':
+            filteredCourses.sort((a, b) => (b.completed / b.modules) - (a.completed / a.modules));
+            break;
+          case 'deadline-asc':
+            filteredCourses.sort((a, b) => {
+              if (!a.deadline && !b.deadline) return 0;
+              if (!a.deadline) return 1;
+              if (!b.deadline) return -1;
+              return new Date(a.deadline) - new Date(b.deadline);
+            });
+            break;
+          case 'deadline-desc':
+            filteredCourses.sort((a, b) => {
+              if (!a.deadline && !b.deadline) return 0;
+              if (!a.deadline) return 1;
+              if (!b.deadline) return -1;
+              return new Date(b.deadline) - new Date(a.deadline);
+            });
+            break;
+        }
+        
+        localStorage.setItem('courses', JSON.stringify(courses));
+        courseList.innerHTML = '';
+        
+        if (filteredCourses.length === 0) {
+          emptyState.classList.remove('hidden');
+          if (searchTerm || filterValue !== 'all') {
+            emptyState.innerHTML = `
+              <i class="fas fa-search text-4xl text-gray-300 mb-4"></i>
+              <h3 class="text-lg font-medium text-gray-500">No courses found</h3>
+              <p class="text-gray-400 mb-4">Try adjusting your search or filter</p>
+              <button id="reset-filters" class="btn-primary px-6 py-2 rounded-lg inline-flex items-center">
+                <i class="fas fa-undo mr-2"></i> Reset Filters
+              </button>
+            `;
+            document.getElementById('reset-filters').addEventListener('click', () => {
+              searchInput.value = '';
+              statusFilter.value = 'all';
+              renderCourses();
+            });
+          }
+        } else {
+          emptyState.classList.add('hidden');
+          filteredCourses.forEach(course => {
+            const progress = (course.completed / course.modules) * 100;
+            const isCompleted = progress === 100;
+            const isOverdue = course.deadline && new Date(course.deadline) < new Date() && !isCompleted;
+            const daysLeft = course.deadline ? Math.ceil((new Date(course.deadline) - new Date()) / (1000 * 60 * 60 * 24)) : null;
+            
+            const li = document.createElement('li');
+            li.className = `bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 card ${isCompleted ? 'border-l-4 border-l-green-500' : ''} ${isOverdue ? 'border-l-4 border-l-red-500' : ''}`;
+            li.dataset.id = course.id;
+            li.innerHTML = `
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between mb-1">
+                  <h3 class="text-lg font-semibold truncate">${course.title}</h3>
+                  <span class="text-xs font-medium px-2 py-1 rounded-full ml-2 ${isCompleted ? 'bg-green-100 text-green-800' : isOverdue ? 'bg-red-100 text-red-800' : 'bg-indigo-100 text-indigo-800'}">
+                    ${isCompleted ? 'Completed' : isOverdue ? 'Overdue' : 'In Progress'}
+                  </span>
+                </div>
+                
+                ${course.description ? `<p class="text-gray-600 text-sm mb-2">${course.description}</p>` : ''}
+                
+                <div class="flex items-center gap-4 flex-wrap">
+                  <div class="flex items-center text-sm text-gray-500">
+                    <i class="fas fa-layer-group mr-1"></i>
+                    <span>${course.completed}/${course.modules} modules</span>
+                  </div>
+                  
+                  ${course.deadline ? `
+                    <div class="flex items-center text-sm ${isOverdue ? 'text-red-500 font-medium' : daysLeft <= 7 ? 'text-yellow-600' : 'text-gray-500'}">
+                      <i class="fas fa-calendar-day mr-1"></i>
+                      <span>${formatDate(course.deadline)}</span>
+                      ${isOverdue ? '<span class="ml-1">(Overdue)</span>' : daysLeft <= 7 ? `<span class="ml-1">(${daysLeft} ${daysLeft === 1 ? 'day' : 'days'} left)</span>` : ''}
+                    </div>
+                  ` : ''}
+                </div>
+                
+                <div class="mt-3">
+                  <div class="flex justify-between text-sm text-gray-500 mb-1">
+                    <span>${Math.round(progress)}% complete</span>
+                    <span>${course.modules - course.completed} modules remaining</span>
+                  </div>
+                  <div class="w-full bg-gray-200 h-2.5 rounded-full">
+                    <div class="h-2.5 rounded-full progress-bar ${isCompleted ? 'bg-green-500' : 'bg-indigo-600'}" style="width: ${progress}%"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="flex flex-wrap gap-2 sm:flex-nowrap">
+                <button onclick="updateProgress(${course.id}, 'dec')" class="btn-secondary px-3 py-2 rounded-lg text-sm flex items-center">
+                  <i class="fas fa-minus mr-1"></i>
+                </button>
+                <button onclick="updateProgress(${course.id}, 'inc')" class="btn-primary px-3 py-2 rounded-lg text-sm flex items-center">
+                  <i class="fas fa-plus mr-1"></i>
+                </button>
+                <button onclick="editCourse(${course.id})" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-800 px-3 py-2 rounded-lg text-sm flex items-center">
+                  <i class="fas fa-edit mr-1"></i>
+                </button>
+                <button onclick="confirmDeleteCourse(${course.id})" class="btn-danger px-3 py-2 rounded-lg text-sm flex items-center">
+                  <i class="fas fa-trash mr-1"></i>
+                </button>
+              </div>
+            `;
+            courseList.appendChild(li);
+          });
+        }
+        
+        updateStats();
+        updateChart();
+        courseCount.textContent = filteredCourses.length;
+      }
+      
+      function formatDate(dateString) {
+        const options = { year: 'numeric', month: 'short', day: 'numeric' };
+        return new Date(dateString).toLocaleDateString(undefined, options);
+      }
+      
+      function toggleSort() {
+        const sortOptions = [
+          'default',
+          'title-asc',
+          'title-desc',
+          'progress-asc',
+          'progress-desc',
+          'deadline-asc',
+          'deadline-desc'
+        ];
+        
+        const currentIndex = sortOptions.indexOf(currentSort);
+        currentSort = sortOptions[(currentIndex + 1) % sortOptions.length];
+        
+        let sortText = '';
+        switch(currentSort) {
+          case 'default': sortText = 'Default'; break;
+          case 'title-asc': sortText = 'A → Z'; break;
+          case 'title-desc': sortText = 'Z → A'; break;
+          case 'progress-asc': sortText = 'Progress ↑'; break;
+          case 'progress-desc': sortText = 'Progress ↓'; break;
+          case 'deadline-asc': sortText = 'Deadline ↑'; break;
+          case 'deadline-desc': sortText = 'Deadline ↓'; break;
+        }
+        
+        sortBtn.innerHTML = `<i class="fas fa-sort mr-2"></i> ${sortText}`;
+        renderCourses();
+      }
+      
+      function updateStats() {
+        totalCourses.textContent = courses.length;
+        
+        const totalMods = courses.reduce((sum, c) => sum + c.modules, 0);
+        totalModules.textContent = totalMods;
+        
+        const completedMods = courses.reduce((sum, c) => sum + c.completed, 0);
+        completedModules.textContent = completedMods;
+        
+        const percentage = totalMods > 0 ? Math.round((completedMods / totalMods) * 100) : 0;
+        completionPercentage.textContent = `${percentage}% complete`;
+      }
+      
+      function updateChart() {
+        if (!completionChart) return;
+        
+        let completed = 0;
+        let inProgress = 0;
+        let notStarted = 0;
+        
+        courses.forEach(course => {
+          if (course.completed === course.modules) {
+            completed += course.modules;
+          } else if (course.completed > 0) {
+            inProgress += course.completed;
+            notStarted += (course.modules - course.completed);
+          } else {
+            notStarted += course.modules;
+          }
+        });
+        
+        completionChart.data.datasets[0].data = [completed, inProgress, notStarted];
+        completionChart.update();
+      }
+      
+      function exportData() {
+        const data = JSON.stringify(courses, null, 2);
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `course-progress-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showToast('📤 Data exported successfully');
+      }
+      
+      function importData(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const importedCourses = JSON.parse(event.target.result);
+            if (Array.isArray(importedCourses)) {
+              courses = importedCourses;
+              renderCourses();
+              showToast('📥 Data imported successfully');
+            } else {
+              showToast('❌ Invalid data format', 'error');
+            }
+          } catch (error) {
+            showToast('❌ Error importing data', 'error');
+            console.error(error);
+          }
+        };
+        reader.readAsText(file);
+        e.target.value = ''; 
+      }
+      
+      function confirmClearAll() {
+        if (courses.length === 0) {
+          showToast('No courses to clear', 'info');
+          return;
+        }
+        
+        showModal(
+          'Clear All Courses',
+          'Are you sure you want to delete all courses? This action cannot be undone.',
+          () => {
+            courses = [];
+            renderCourses();
+            showToast('🗑️ All courses deleted');
+          }
+        );
+      }
+      
+      function showModal(title, message, confirmAction) {
+        document.getElementById('modal-title').textContent = title;
+        document.getElementById('modal-message').textContent = message;
+        modalConfirm.onclick = () => {
+          confirmAction();
+          closeModal();
+        };
+        confirmationModal.classList.remove('hidden');
+      }
+      
+      function closeModal() {
+        confirmationModal.classList.add('hidden');
+      }
+      
+      function executeModalAction() {
+        // This function is intentionally left empty as it's handled in showModal
+      } 
+      
+      function toggleDarkMode() {
+        const isDark = document.body.classList.toggle('dark-mode');
+        if (isDark) {
+          document.body.classList.remove('bg-gradient-to-br', 'from-gray-50', 'to-gray-100');
+        } else {
+          document.body.classList.add('bg-gradient-to-br', 'from-gray-50', 'to-gray-100');
+        }
+        localStorage.setItem('dark-mode', isDark);
+      }
+      
+      function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toast-message');
+        let icon;
+        switch(type) {
+          case 'success': icon = 'fa-check-circle'; break;
+          case 'error': icon = 'fa-exclamation-circle'; break;
+          case 'warning': icon = 'fa-exclamation-triangle'; break;
+          case 'info': icon = 'fa-info-circle'; break;
+          default: icon = 'fa-check-circle';
+        }
+        toast.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg flex items-center toast hidden`;
+        switch(type) {
+          case 'success': toast.classList.add('bg-green-600'); break;
+          case 'error': toast.classList.add('bg-red-600'); break;
+          case 'warning': toast.classList.add('bg-yellow-600'); break;
+          case 'info': toast.classList.add('bg-blue-600'); break;
+          default: toast.classList.add('bg-indigo-600');
+        }
+        
+        toast.innerHTML = `<i class="fas ${icon} mr-2"></i><span id="toast-message">${message}</span>`;
+        toast.classList.remove('hidden');
+        
+        setTimeout(() => {
+          toast.classList.add('hidden');
+        }, 3000);
+      }
+      
+      window.updateProgress = (id, type) => {
+        const course = courses.find(c => c.id === id);
+        if (!course) return;
+        
+        if (type === 'inc' && course.completed < course.modules) {
+          course.completed++;
+          showToast(`➕ Module completed in "${course.title}"`);
+        } else if (type === 'dec' && course.completed > 0) {
+          course.completed--;
+          showToast(`➖ Module removed in "${course.title}"`, 'info');
+        }
+        
+        renderCourses();
+      };
+      
+      window.editCourse = (id) => {
+        const course = courses.find(c => c.id === id);
+        if (!course) return;
+        
+        const editForm = document.createElement('div');
+        editForm.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+        editForm.innerHTML = `
+          <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 dark:bg-gray-800 dark:text-white">
+            <h3 class="text-xl font-bold mb-4">Edit Course</h3>
+            
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium mb-1">Title</label>
+                <input id="edit-title" value="${course.title}" class="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600">
+              </div>
+              
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium mb-1">Total Modules</label>
+                  <input id="edit-modules" type="number" value="${course.modules}" class="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600">
+                            <div>
+                  <label class="block text-sm font-medium mb-1">Completed</label>
+                  <input id="edit-completed" type="number" value="${course.completed}" class="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600">
+                </div>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium mb-1">Deadline</label>
+                <input id="edit-deadline" type="date" value="${course.deadline || ''}" class="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600">
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium mb-1">Description</label>
+                <textarea id="edit-description" class="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600">${course.description || ''}</textarea>
+              </div>
+            </div>
+            
+            <div class="flex justify-end gap-3 mt-6">
+              <button id="edit-cancel" class="px-4 py-2 border rounded-lg">Cancel</button>
+              <button id="edit-save" class="px-4 py-2 bg-indigo-600 text-white rounded-lg">Save</button>
+            </div>
+          </div>
+        `;
+        
+        document.body.appendChild(editForm);
+        
+        document.getElementById('edit-cancel').addEventListener('click', () => {
+          document.body.removeChild(editForm);
+        });
+        
+        document.getElementById('edit-save').addEventListener('click', () => {
+          const newTitle = document.getElementById('edit-title').value.trim();
+          const newModules = parseInt(document.getElementById('edit-modules').value);
+          const newCompleted = parseInt(document.getElementById('edit-completed').value);
+          const newDeadline = document.getElementById('edit-deadline').value;
+          const newDescription = document.getElementById('edit-description').value.trim();
+          
+          if (!newTitle || isNaN(newModules) || isNaN(newCompleted)) {
+            showToast('⚠️ Please fill all required fields', 'warning');
+            return;
+          }
+          
+          if (newCompleted > newModules) {
+            showToast('⚠️ Completed modules cannot exceed total modules', 'warning');
+            return;
+          }
+          
+          course.title = newTitle;
+          course.modules = newModules;
+          course.completed = newCompleted;
+          course.deadline = newDeadline;
+          course.description = newDescription;
+          
+          document.body.removeChild(editForm);
+          showToast(`✏️ Course "${course.title}" updated`);
+          renderCourses();
+        });
+      };
+      
+      window.confirmDeleteCourse = (id) => {
+        const course = courses.find(c => c.id === id);
+        if (!course) return;
+        
+        showModal(
+          'Delete Course',
+          `Are you sure you want to delete "${course.title}"? This action cannot be undone.`,
+          () => {
+            courses = courses.filter(c => c.id !== id);
+            showToast(`🗑️ Course "${course.title}" deleted`);
+            renderCourses();
+          }
+        );
+      };
+    });
+  </script>
+</body>
+</html> 
